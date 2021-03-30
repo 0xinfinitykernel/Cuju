@@ -47,7 +47,7 @@ static void dirty_pages_userspace_add(unsigned long gfn)
     for (i = 0; i < cnt; i++)
         if (dirty_pages_userspace[i] == gfn)
             return;
-    
+
     i = __sync_fetch_and_add(&dirty_pages_userspace_off, 1);
     dirty_pages_userspace[i] = gfn;
     assert(i < 1024);
@@ -133,7 +133,7 @@ bool cuju_supported(void)
 }
 
 void qmp_cuju_adjust_epoch(uint32_t epoch, Error **errp) {
-    printf("new epoch size is %u us.\n", epoch);
+//    printf("new epoch size is %u us.\n", epoch);
     epoch_time_in_us = epoch;
 
     uint32_t value = epoch_time_in_us;
@@ -295,10 +295,10 @@ void kvm_shmem_stop_ft(void)
         fprintf(stderr, "%s failed: %d\n", __func__, ret);
         exit(ret);
     }
- 
+
     ft_started = 0;
 }
- 
+
 void kvm_shmem_start_migrate_cancel(void)
 {
     migrate_cancel = 1;
@@ -532,14 +532,14 @@ static inline int memcmp_avx2(void *orig, void *curr)
   __m256d a = _mm256_load_pd((double const *)orig);
   __m256d b = _mm256_load_pd((double const *)curr);
   __m256d e = _mm256_cmp_pd(a, b, _CMP_EQ_OQ);
-  
+
   if (!_mm256_testc_pd(e, memcmp_256pd_allone))
     return 1;
 
   a = _mm256_load_pd((double const *)(orig + 32));
   b = _mm256_load_pd((double const *)(curr + 32));
   e = _mm256_cmp_pd(a, b, _CMP_EQ_OQ);
-  
+
   if (!_mm256_testc_pd(e, memcmp_256pd_allone))
     return 1;
 
@@ -633,7 +633,7 @@ static inline int memcmp_sse2_64(void *orig, void *curr)
 static inline int gather_16(char *orig_page, char *curr_page)
 {
   return memcmp_sse2_16(orig_page, curr_page);
- 
+
 }
 
 static inline int gather_32(char *orig_page, char *curr_page)
@@ -714,7 +714,7 @@ static void compress_init(void)
     x1[63] = 63;
     assert(memcmp_sse2_64(x1, x2) == 0);
 
- 
+
 
     for (i = 0; i < 64; ++i) {
         x1[i] = i;
@@ -806,7 +806,7 @@ void *kvm_shmem_alloc_trackable(unsigned int size)
 		printf("%s out of trackable_ptrs array.\n", __func__);
 		return NULL;
 	}
-	
+
 	ptr->ptr = mmap(NULL, (size_t)size, PROT_READ | PROT_WRITE,
 					MAP_ANONYMOUS | MAP_SHARED | MAP_LOCKED | MAP_POPULATE,
 					-1, 0);
@@ -1102,6 +1102,13 @@ static void thread_set_realtime(void)
         printf("%s pthread_setschedparam failed\n", __func__);
         exit(-1);
     }
+
+	cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(4, &cpuset);
+//    CPU_SET(1, &cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
 }
 
 static void* trans_ram_conn_thread_func(void *opaque)
@@ -1494,7 +1501,7 @@ void kvmft_update_epoch_flush_time_linear(double time_s)
         a0 = y1 / n - a1 * x1 / n;
         e = y[0] - a0 - a1 * x[0];
         a0 += e;
-        printf("\nY=%.2f+%.2fX\n",a0,a1); 
+        printf("\nY=%.2f+%.2fX\n",a0,a1);
         new_f = (max_s - a0) / a1;
         if (time_s > max_s)
             new_f -= 0.01;
@@ -1515,7 +1522,7 @@ void kvmft_update_epoch_flush_time_linear(double time_s)
     }
 }
 
-int show_ft_started (void) 
+int show_ft_started (void)
 {
 	return ft_started;
 }

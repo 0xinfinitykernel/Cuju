@@ -329,6 +329,8 @@ struct kvm_vcpu {
 	bool hrtimer_running;
 	bool hrtimer_pending;
 	unsigned long epoch_time_in_us;
+
+	struct task_struct *task;
 };
 
 static inline struct kvm_vcpu *hrtimer_to_vcpu(struct hrtimer *timer)
@@ -454,6 +456,18 @@ struct kvm_trackable {
 	struct page **page;
 };
 
+struct k_dis3 {
+    int index;
+    long long value;
+};
+
+struct k_rpoint {
+    long long dirty_pfns_len;
+    long long dirty_len;
+    long long trans_rate;
+};
+
+
 struct kvm {
 	spinlock_t mmu_lock;
 	struct mutex slots_lock;
@@ -531,6 +545,53 @@ struct kvm {
 
     DECLARE_KFIFO(trans_queue, int, KVM_MAX_MIGRATION_DESC);
     wait_queue_head_t trans_queue_event;
+
+
+	s64 current_run_start[KVM_DIRTY_BITMAP_INIT_COUNT];
+	struct task_struct *ft_cmp_tsk;
+	wait_queue_head_t calc_event;
+	int ft_kick;
+	int nextT;
+	int target_latency_us;
+	int current_trans_rate;
+    struct k_rpoint **krpoint;
+    struct k_rpoint **krpoint2;
+	struct k_dis3 *kdis3;
+	struct k_dis3 *kdis4;
+	int *krindex;
+	int *krindex_ok;
+	int *krindex2;
+	int *krindex_ok2;
+	int e_runtime[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int e_trans[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int bo;
+	uint64_t bo_sum;
+	uint32_t bo_c;
+	uint64_t e_dirty_len[KVM_DIRTY_BITMAP_INIT_COUNT];
+	uint64_t e_dirty_pfns_len[KVM_DIRTY_BITMAP_INIT_COUNT];
+	uint64_t k_dis_value[KVM_DIRTY_BITMAP_INIT_COUNT];
+	uint64_t tmp;
+	int e_trans_rate[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int alpha;
+	int record_compress_t[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int record_compress_t2[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int record_compress_t3[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int record_compress_t4[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int record_compress_dirty_pfns[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int last_predict_copy_and_check;
+	int last_send_r;
+	int last_compress_r;
+	int min_r;
+	uint64_t send_r_sum;
+	uint64_t compress_r_sum;
+	uint64_t send_r_count;
+	uint64_t compress_r_count;
+	int record_r0[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int record_r1[KVM_DIRTY_BITMAP_INIT_COUNT];
+
+	int record_send_queue_av_time[KVM_DIRTY_BITMAP_INIT_COUNT];
+	int record_send_queue_sum_time[KVM_DIRTY_BITMAP_INIT_COUNT];
+
 };
 
 #define kvm_err(fmt, ...) \
